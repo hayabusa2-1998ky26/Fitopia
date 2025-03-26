@@ -235,12 +235,12 @@ def player_move
   else
     if not (keyIsDown(LEFT_ARROW) && keyIsDown(RIGHT_ARROW))
       if keyIsDown(LEFT_ARROW)
-        $player_run += 0.18 * speed
+        $player_run += 0.19 * speed
         $mx -= 2 * speed
         $player_costume = $player_run.to_i % 6 + 1
         $player_angle = 0
       elsif keyIsDown(RIGHT_ARROW)
-        $player_run += 0.18 * speed
+        $player_run += 0.19 * speed # .18
         $mx += 2 * speed
         $player_costume = $player_run.to_i % 6 + 1
         $player_angle = 1
@@ -279,6 +279,7 @@ def player_move
   
   $key = ""
 end
+
 $PROGRAM_NAME = "field"
 </script>
 <script type="text/ruby" section="s02" name="fish rod shop">
@@ -886,8 +887,8 @@ def setup
   $y_word_now = 0 # } use to screen words
   $shop_conversation = 0 # 会話の進捗
   $music = "opening"
-  $music_volume = 1.0     # 設定上のボリューム
-  $music_set_volume = 1.0 # 実際に流す音のボリューム
+  $music_volume = 0.0     # 設定上のボリューム
+  $music_set_volume = 0.0 # 実際に流す音のボリューム
   $se_volume = 0.7
   $shop_command = 0 # ["買う", "店から出る"]
   $shop_command_now = 0 # ["コマンド選択欄", "買えるもの欄", "店から出る表示"]
@@ -1060,7 +1061,7 @@ def draw
   when "fishing"
     if $fishing_init == true
       $fishing_init = false
-      $arrive_water_state = 3
+      $arrive_water_state = 0
       $turiito = "neutral"
       $when_come_fish = 10000000000
     end
@@ -1083,7 +1084,7 @@ def draw
       uki_move -= -20 - rand(1.0..3.0)
     end
     
-    if $key == "ArrowUp" and $arrive_water_state <= 2
+    if $key == "ArrowUp" and ($arrive_water_state == 2 or $turiito == "neutral")
       $turiito = "Up"
       $turiito_nemoto_x = 301
       $turiito_nemoto_y = 166
@@ -1091,7 +1092,7 @@ def draw
       $arrive_water_state = 0
       # $could_fishing = false
     end
-    if $key == "ArrowDown" and $arrive_water_state == 0
+    if $key == "ArrowDown" and $arrive_water_state == 0 and $turiito == "Up"
       $fishing_power = 0
       $turiito = "Down"
       $turiito_nemoto_x = 274
@@ -1167,6 +1168,10 @@ def draw
       make_uki($turiito_x, [$turiito_y, 362].min + uki_move * 3)
     else
       $player_costume = 8
+      $turiito_x = 301
+      $turiito_y = 166
+      $turiito_x_speed = 0
+      $turiito_y_speed = 0
     end
     
     if $could_fishing
@@ -1230,6 +1235,7 @@ def draw
       $scene = "field"
       $my = 0
       $turiito = "None"
+      $fishing_init = true
       $sound_cancel.play
     end
   end
