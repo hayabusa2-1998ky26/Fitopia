@@ -172,6 +172,8 @@ StoreAudio.createAudio('決定ボタンを押す8_釣り完了.mp3', 'data:audio
 <script type="text/ruby" section="s01" name="field">
 $PROGRAM_NAME = "field"
 # 追加のコード (your supplementary code here)
+$is_open_menu = false
+
 def field(can_move)
   # screen stage
   noStroke
@@ -194,10 +196,10 @@ def field(can_move)
     line(grass[0] - $mx, 380, grass[0] - $mx, grass[1] + 10)
   end
   
-  make_house($buildings[0][1] + 300 - $mx, 350, $home_ico, 1)
-  make_house($buildings[1][1] + 300 - $mx, 350, $turizao1_img, 0.92)
+  make_house($buildings[0][1] + 300 - $mx, 350, $home_ico, 1, img_size=1)
+  make_house($buildings[1][1] + 300 - $mx, 350, $turizao1_img, 0.92, img_size=1)
   make_chair($buildings[2][1] + 400 - $mx, 350)
-  make_house($buildings[3][1] + 300 - $mx, 350, $fish_img, 0.687)
+  make_house($buildings[3][1] + 300 - $mx, 350, $esa1_img, 1.931, img_size=0.5)
   screen_state
   
   if $white_outing
@@ -229,10 +231,20 @@ def field(can_move)
     $black_ining = black_in
     return
   end
-  if can_move
+  if can_move && $is_open_menu == false
     player_move
   end
   screen_player
+  
+  if $key == "c" && can_move && $is_open_menu == false
+    $is_open_menu = true
+    $key = ""
+    $sound_decide.stop
+    $sound_decide.play
+  end
+  if $is_open_menu
+    menu
+  end
 end
 
 def player_move
@@ -292,8 +304,7 @@ def player_move
   if $mx > 1960 - 400
     $mx = 1960 - 400
   end
-  
-  $key = ""
+
 end
 
 $PROGRAM_NAME = "field"
@@ -461,6 +472,8 @@ def fishing
     end
     if $key == "x"
       $xp += 10
+      $fish_amount += 1
+      $money += rand(10..20)
       $fishes[$fish][1] = true
       $fishing_first_time_effect = 0
       $arrive_water_state = 0
@@ -491,7 +504,7 @@ $PROGRAM_NAME = "fishing"
 <script type="text/ruby" section="s03" name="make building">
 $PROGRAM_NAME = "make building"
 # 追加のコード (your supplementary code here)
-def make_house(x, y, image, img_x_y)
+def make_house(x, y, image, img_x_y, img_size)
   size = 200
   noStroke
   fill("burlywood")
@@ -500,7 +513,9 @@ def make_house(x, y, image, img_x_y)
   rect(x + size / 4, y - size * 0.6, size / 2, size * 0.6)
   fill("sienna")
   triangle(x - size / 3, y - size / 3 * 2, x + size / 2, y - size * 1.5, x + size / 3 * 4, y - size / 3 * 2)
-  image(image, x + size * 0.25, y - size * 1.2, size / 2, size * img_x_y / 2)
+  imageMode(CENTER)
+  image(image, x + size * 0.5, y - size, size / 2 * img_size, size * img_x_y / 2 * img_size)
+  imageMode(CORNER)
 end
 
 def make_chair(x, y)
@@ -512,6 +527,114 @@ def make_chair(x, y)
 end
 
 $PROGRAM_NAME = "make building"
+</script>
+<script type="text/ruby" section="s11" name="menu">
+$PROGRAM_NAME = "menu"
+# 追加のコード (your supplementary code here)
+$menu_cursol = 0
+$menu_change_cursol = -1
+
+def menu
+  # 背景
+  fill("tan")
+  rectMode(CORNERS)
+  rect(40, 40, 800 - 40, 450 - 40, 50, 50, 50, 50)
+  rectMode(CORNER)
+  
+  # 文字 "menu"
+  fill("black")
+  textAlign(CENTER)
+  textSize(50)
+  text("Menu", 400, 100)
+  
+  # キャラ画像
+  image($players[0][6], 100, 120, $player_sizes[6][0] * (260 / $player_sizes[6][1]), 260)
+  
+  # 選択肢をそれぞれ実行
+  if $key == "z" &&  $menu_change_cursol == -1
+    $menu_change_cursol = 0
+    $sound_decide.stop
+    $sound_decide.play
+  end
+  if $menu_change_cursol == -1
+    # 文字 "XキーかCキーで閉じる"
+    textSize(15)
+    text("XキーかCキーで閉じる", 400, 390)
+    textAlign(LEFT)
+    
+    # カーソル移動
+    if $key == "ArrowUp"
+      $menu_cursol -= 1
+      $sound_choose.stop
+      $sound_choose.play
+    elsif $key == "ArrowDown"
+      $menu_cursol += 1
+      $sound_choose.stop
+      $sound_choose.play
+    end
+    
+    # カーソルオーバー防止
+    if $menu_cursol >= 3
+      $menu_cursol = 2
+    end
+    if $menu_cursol <= -1
+      $menu_cursol = 0
+    end
+    
+    # 選択肢表示
+    rectMode(CENTER)
+    textSize(25)
+    textAlign(CENTER)
+    texts = ["つりざおを\n交換する", "えさを\n交換する", "魚図鑑を\n見る"]
+    for i in 0..2
+      strokeWeight(6)
+      if i == $menu_cursol
+        stroke("white")
+      else
+        stroke("black")
+      end
+      fill("goldenrod")
+      rect(350, 150 + i * 87, 200, 70)
+  
+      fill("black")
+      noStroke
+      text(texts[i], 350, 141 + i * 87)
+    end
+    rectMode(CORNER)
+    textAlign(LEFT)
+  else
+    case $menu_change_cursol
+    when 0 # つりざおを交換する
+    when 1 # えさを交換する
+    when 2 # 魚図鑑を見る
+    end
+    
+    # 文字 "Xキーで閉じる"
+    fill("black")
+    noStroke
+    textAlign(CENTER)
+    textSize(15)
+    text("Xキーで閉じる", 400, 390)
+    textAlign(LEFT)
+    
+    # Xキーでとじる
+    if $key == "x"
+      $menu_change_cursol = -1
+      $key = ""
+      $sound_cancel.stop
+      $sound_cancel.play
+    end
+  end
+    
+  # CキーかXキーで終了
+  if ($key == "c" || $key == "x") && $is_open_menu
+    $is_open_menu = false
+    $sound_cancel.stop
+    $sound_cancel.play
+  end
+end
+
+$PROGRAM_NAME = "menu"
 </script>
 <script type="text/ruby" section="s04" name="play set sound">
 $PROGRAM_NAME = "play set sound"
@@ -1142,9 +1265,23 @@ class Shop
     
     # 商品展示
     fill("black")
-    image(self.goods_image1, 20, 40, 290 / 2, 290 / 2 / 414 * 450)
-    image(self.goods_image2, 20, 40 + 410 / 2, 290 / 2, 290 / 2 / 737 * 800)
+    width, height = self.goods_image1[0].width, self.goods_image1[0].height
+    if self.goods_image1[1] == "row"
+      image(self.goods_image1[0], 20, 40, 290 / 2, 290 / 2 / width * height)
+    elsif self.goods_image1[1] == "cloumn"
+      real_width = 180 / height * width
+      image(self.goods_image1[0], (156 - 20 - real_width) + 20, 40, real_width, 180)
+    end
+    
     two_ranks_move_y = 410 / 2
+    width, height = self.goods_image2[0].width, self.goods_image2[0].height
+    if self.goods_image2[1] == "row"
+      image(self.goods_image2[0], 20, 40 + two_ranks_move_y, 290 / 2, 290 / 2 / width * height)
+    elsif self.goods_image2[1] == "cloumn"
+      real_width = 180 / height * width
+      image(self.goods_image2[0], (156 - 20 - real_width) / 2 + 20, 40 + two_ranks_move_y, real_width, 180)
+    end
+    
     goods_kinds = [self.goods_state1[0], self.goods_state2[0]]
     goods_spend_moneys = [self.goods_state1[1], self.goods_state2[1]]
     for i in 0..1
@@ -1226,7 +1363,7 @@ def start_up
   $music = "opening"
   background("powderblue")
   # screen effects
-  make_house(500, 450, $turizao1_img, 0.92)
+  make_house(500, 450, $turizao1_img, 0.92, img_size=1)
   fill("lightcyan")
   if $frame % 10 == 1
     $effects += [[rand(-100..800), 0]]
@@ -1272,17 +1409,6 @@ def start_up
 end
 $PROGRAM_NAME = "start up"
 </script>
-<script type="text/ruby" section="s10" name="inventory">
-$PROGRAM_NAME = "inventory"
-# 追加のコード (your supplementary code here)
-def inventory
-  rectMode(CORNERS)
-  color("brown")
-  rect(40, 40, 450 - 40, 800 - 40, 50, 50, 50, 50)
-  rectMode(CORNER)
-end
-$PROGRAM_NAME = "inventory"
-</script>
 <script type="text/ruby" section="s00" name="main">
 $PROGRAM_NAME = "main"
 # 初期設定用のコード (your setup code here)
@@ -1301,7 +1427,7 @@ def setup
   $states = ["筋力", "体力", "運"]
   $turizao = ["古びたつりざお", [2, 0, 0]] # ["name", "states"]
   $esa = ["普通のえさ", [0, 0, 0]]
-  $inventory = []
+  $menu = []
   $scene = "start up"
   $effects = []
   $mx, $my = 0, 0
@@ -1311,8 +1437,8 @@ def setup
   $y_word_now = 0 # } use to screen words
   $shop_conversation = 0 # 会話の進捗
   $music = "opening"
-  $music_volume = 0     # 設定上のボリューム
-  $music_set_volume = 0 # 実際に流す音のボリューム
+  $music_volume = 0.7     # 設定上のボリューム
+  $music_set_volume = 0.7 # 実際に流す音のボリューム
   $se_volume = 0.7
   $shop_command = 0 # ["買う", "店から出る"]
   $shop_command_now = 0 # ["コマンド選択欄", "買えるもの欄", "店から出る表示"]
@@ -1345,6 +1471,7 @@ def setup
   $xp = 0
   $xp_progress = 0     # データ上のxp
   $xp_progress_now = 0 # 実際に表示するxp
+  $inventory = []
   $debug_x = 400
   $debug_y = 225
   
@@ -1445,12 +1572,12 @@ def setup
   $fish_rod_shop = Shop.new(shop_assistants_img=$shop_assistants[0])
   $fish_rod_shop.set_conversation(["＊こんにちは、つりざお屋だよ", "＊何か買っていくかい？"], 
   ["＊また来てな"])
-  $fish_rod_shop.set_goods($turizao, [$turizao1_state, $turizao1_img], [$turizao2_state, $turizao2_img])
+  $fish_rod_shop.set_goods($turizao, [$turizao1_state, [$turizao1_img, "row"]], [$turizao2_state, [$turizao2_img, "row"]])
   
   $feed_shop = Shop.new(shop_assistants_img=$shop_assistants[1])
   $feed_shop.set_conversation(["＊ちわ～", "＊餌屋は今日も開店中～"], 
   ["＊それじゃあ、またね～"])
-  $feed_shop.set_goods($esa, [$esa1_state, $esa1_img], [$esa2_state, $esa2_img])
+  $feed_shop.set_goods($esa, [$esa1_state, [$esa1_img, "cloumn"]], [$esa2_state, [$esa2_img, "cloumn"]])
 end
 
 def screen_player
@@ -1478,7 +1605,7 @@ end
 def screen_state
   noStroke
   fill("darkgreen")
-  quad(435, 93, 456, 101, 456 + (768 - 456) * $xp_progress_now, 101, 435 + (753 - 435) * $xp_progress_now, 93)
+  quad(435, 92, 456, 101, 456 + (768 - 456) * $xp_progress_now, 101, 435 + (758 - 435) * $xp_progress_now, 92)
   image($waku_img, 400 - 30, 30, 400, (400 / $waku_img.width) * $waku_img.height)
   fill("black")
   textSize(40)
@@ -1501,6 +1628,7 @@ end
 
 # 画面描画用のコード (your draw code here)
 def draw
+  debug = false
   $frame += 1
   $xp_progress = $xp / ($charactor_state[0] * 50)
   $xp_progress_now += ($xp_progress - $xp_progress_now) * 0.04
@@ -1540,13 +1668,15 @@ def draw
   when "seri"
     $feed_shop.shopping
   end
-  # fill("black")
-  # noStroke
-  # circle($debug_x, $debug_y, 2)
-  # if keyIsDown(13)
-  #   textSize(50)
-  #   text("x:#{$debug_x.to_i}y:#{$debug_y.to_i}", 400, 225)
-  # end
+  if debug
+    fill("black")
+    noStroke
+    circle($debug_x, $debug_y, 2)
+    if keyIsDown(13)
+      textSize(50)
+      text("x:#{$debug_x.to_i}y:#{$debug_y.to_i}", 400, 225)
+    end
+  end
   $key = ""
 end
 
